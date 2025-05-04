@@ -1,42 +1,31 @@
 {% extends "layout.html" %}
 {% block content %}
-<div class="d-flex justify-content-center align-items-start mt-4">
-  <div class="card shadow-sm p-4 w-100" style="max-width: 600px;">
-    <h4 class="mb-4 text-center">📇 New Contact</h4>
-    <form method="POST">
-      <div class="row g-3">
-        <div class="col-md-6">
-          <input type="text" name="first_name" class="form-control" placeholder="First Name" required>
-        </div>
-        <div class="col-md-6">
-          <input type="text" name="last_name" class="form-control" placeholder="Last Name" required>
-        </div>
-        <div class="col-md-6">
-          <input type="text" name="phone" class="form-control" placeholder="Phone Number" required>
-        </div>
-        <div class="col-md-6">
-          <input type="email" name="email" class="form-control" placeholder="Email Address" required>
-        </div>
-        <div class="col-12">
-          <input type="text" name="address" class="form-control" placeholder="Street Address" required>
-        </div>
-        <div class="col-12">
-          <input type="url" name="linkedin" class="form-control" placeholder="LinkedIn Profile (Optional)">
-        </div>
-        <div class="col-12">
-          <select name="category" class="form-select" required>
-            <option disabled selected>Choose Category</option>
-            <option value="Family">Family</option>
-            <option value="Friends">Friends</option>
-            <option value="Favorite">Favorite</option>
-            <option value="Others">Others</option>
-          </select>
-        </div>
-        <div class="col-12 d-grid">
-          <button type="submit" class="btn btn-primary">➕ Add Contact</button>
-        </div>
-      </div>
-    </form>
-  </div>
+<div class="card p-4 mx-auto mt-4" style="max-width:500px">
+  <h5 class="text-center mb-3">Add New Contact</h5>
+  <form method="POST" class="row g-2">
+    {% for name, type, ph in [
+      ("first_name", "text", "First Name"),
+      ("last_name", "text", "Last Name"),
+      ("phone", "text", "Phone"),
+      ("email", "email", "Email"),
+      ("address", "text", "Address"),
+      ("linkedin", "url", "LinkedIn URL (optional)")
+    ] %}
+    <div class="col-12">
+      <input name="{{name}}" type="{{type}}" class="form-control" placeholder="{{ph}}" {% if 'optional' not in ph %}required{% endif %}>
+    </div>
+    {% endfor %}
+    <div class="col-12">
+      <select name="category" class="form-select" required>
+        <option disabled selected>Choose Category</option>
+        {% for cat in ['Family', 'Friends', 'Favorite', 'Others'] %}
+        <option value="{{cat}}">{{cat}}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-12 d-grid">
+      <button class="btn btn-primary">Add</button>
+    </div>
+  </form>
 </div>
 {% endblock %}

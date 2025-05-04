@@ -1,0 +1,44 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<h1 class="mb-4">My Contacts</h1>
+
+<form method="get" action="{{ url_for('home') }}" class="mb-4">
+    <div class="input-group">
+        <input type="text" name="search" class="form-control" placeholder="Search contacts" value="{{ search_query }}">
+        <button class="btn btn-outline-secondary" type="submit">Search</button>
+    </div>
+</form>
+
+<a href="{{ url_for('add_contact') }}" class="btn btn-primary mb-3">Add New Contact</a>
+
+<!-- Contacts Table -->
+<table class="table table-bordered contact-table">
+    <thead class="table-light">
+        <tr>
+            <th>Name</th>
+            <th>Phone</th>
+            <th>Email</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for contact in contacts %}
+        <tr>
+            <td>{{ contact.name }}</td>
+            <td>{{ contact.phone }}</td>
+            <td>{{ contact.email }}</td>
+            <td>
+                <a href="{{ url_for('edit_contact', index=loop.index0) }}" class="btn btn-warning btn-sm">Edit</a>
+                <a href="{{ url_for('delete_contact', index=loop.index0) }}" class="btn btn-danger btn-sm">Delete</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% if not contacts %}
+<p>No contacts found. Please add some contacts.</p>
+{% endif %}
+
+{% endblock %}

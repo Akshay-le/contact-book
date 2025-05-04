@@ -1,0 +1,42 @@
+{% extends "layout.html" %}
+{% block content %}
+<h3 class="text-center mb-4 text-dark">Welcome, {{ username }}!</h3>
+
+<form method="GET" action="/" class="mb-4 d-flex justify-content-center">
+  <input name="q" value="{{ query }}" class="form-control w-50 me-2 shadow-sm" placeholder="Search contacts...">
+  <button class="btn btn-primary shadow-sm">Search</button>
+</form>
+
+{% if contacts %}
+  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+    {% for c in contacts %}
+    <div class="col">
+      <div class="card h-100 shadow-lg border-0 rounded-lg overflow-hidden">
+        <div class="card-body">
+          <h5 class="card-title text-dark">{{ c.first_name }} {{ c.last_name }}</h5>
+          <p class="badge bg-primary text-white mb-3">{{ c.category }}</p>
+          <ul class="list-unstyled text-muted">
+            <li><i class="bi bi-telephone-fill"></i> <strong>Phone:</strong> {{ c.phone }}</li>
+            <li><i class="bi bi-envelope-fill"></i> <strong>Email:</strong> <a href="mailto:{{ c.email }}" class="text-decoration-none">{{ c.email }}</a></li>
+            <li><i class="bi bi-geo-alt-fill"></i> <strong>Address:</strong> {{ c.address }}</li>
+            <li><i class="bi bi-linkedin"></i> <strong>LinkedIn:</strong>
+              {% if c.linkedin %}
+                <a href="{{ c.linkedin }}" target="_blank" class="text-decoration-none text-info">Profile</a>
+              {% else %}
+                <span class="text-muted">N/A</span>
+              {% endif %}
+            </li>
+          </ul>
+        </div>
+        <div class="card-footer bg-light d-flex justify-content-between align-items-center">
+          <a href="{{ url_for('edit_contact', index=loop.index0) }}" class="btn btn-sm btn-outline-warning">Edit</a>
+          <a href="{{ url_for('delete_contact', index=loop.index0) }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete this contact?')">Delete</a>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="alert alert-info text-center">No contacts found. Try adding one!</div>
+{% endif %}
+{% endblock %}

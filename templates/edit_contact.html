@@ -1,0 +1,19 @@
+{% extends "layout.html" %}
+{% block content %}
+<h3>Edit Contact</h3>
+<form method="POST">
+  <input class="form-control mb-2" name="first_name" value="{{ contact.first_name }}" required>
+  <input class="form-control mb-2" name="last_name" value="{{ contact.last_name }}" required>
+  <input class="form-control mb-2" name="phone" value="{{ contact.phone }}" required>
+  <input class="form-control mb-2" name="email" value="{{ contact.email }}" required>
+  <input class="form-control mb-2" name="address" value="{{ contact.address }}" required>
+  <input class="form-control mb-2" name="linkedin" value="{{ contact.linkedin }}">
+  <select class="form-select mb-3" name="category" required>
+    <option {{ "selected" if contact.category == "Family" }} value="Family">Family</option>
+    <option {{ "selected" if contact.category == "Friends" }} value="Friends">Friends</option>
+    <option {{ "selected" if contact.category == "Favorite" }} value="Favorite">Favorite</option>
+    <option {{ "selected" if contact.category == "Others" }} value="Others">Others</option>
+  </select>
+  <button class="btn btn-warning">Update</button>
+</form>
+{% endblock %}

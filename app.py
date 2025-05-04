@@ -141,4 +141,5 @@ def delete_contact(index):
     return redirect(url_for('home'))
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # For production, ensure app is not in debug mode
+    app.run(debug=False)

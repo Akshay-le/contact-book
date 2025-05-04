@@ -3,37 +3,32 @@
 <head>
   <meta charset="UTF-8">
   <title>Contact Book</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
     body {
-      background-color: #f8f9fa;
-    }
-    .navbar-brand {
-      font-weight: bold;
+      background: #f4f6f9;
+      font-family: 'Segoe UI', sans-serif;
     }
     .nav-link.active {
       font-weight: bold;
+      color: #0d6efd !important;
     }
-    .container {
-      max-width: 900px;
+    .card {
+      border-radius: 12px;
+    }
+    .btn {
+      border-radius: 20px;
     }
   </style>
 </head>
 <body>
-  <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+  <nav class="navbar navbar-expand-md navbar-light bg-white shadow-sm mb-4">
     <div class="container">
-      <a class="navbar-brand" href="{{ url_for('home') }}">📒 Contact Book</a>
-      <div>
-        <ul class="navbar-nav ms-auto">
-          {% if 'username' in session %}
-            <li class="nav-item"><a href="{{ url_for('home') }}" class="nav-link {% if request.endpoint == 'home' %}active{% endif %}">Home</a></li>
-            <li class="nav-item"><a href="{{ url_for('add_contact') }}" class="nav-link {% if request.endpoint == 'add_contact' %}active{% endif %}">Add</a></li>
-            <li class="nav-item"><a href="{{ url_for('logout') }}" class="nav-link">Logout</a></li>
-          {% else %}
-            <li class="nav-item"><a href="{{ url_for('login') }}" class="nav-link {% if request.endpoint == 'login' %}active{% endif %}">Login</a></li>
-            <li class="nav-item"><a href="{{ url_for('register') }}" class="nav-link {% if request.endpoint == 'register' %}active{% endif %}">Register</a></li>
-          {% endif %}
-        </ul>
+      <a class="navbar-brand fw-semibold" href="/">📇 ContactBook</a>
+      <div class="d-flex">
+        <a href="{{ url_for('add_contact') }}" class="btn btn-outline-primary me-2">+ Add</a>
+        <a href="{{ url_for('logout') }}" class="btn btn-outline-secondary">Logout</a>
       </div>
     </div>
   </nav>
@@ -46,8 +41,10 @@
         {% endfor %}
       {% endif %}
     {% endwith %}
-
+    
     {% block content %}{% endblock %}
   </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

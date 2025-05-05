@@ -1,19 +1,31 @@
 {% extends "layout.html" %}
 {% block content %}
-<h3>Add Contact</h3>
-<form method="POST">
-  <input class="form-control mb-2" name="first_name" placeholder="First Name" required>
-  <input class="form-control mb-2" name="last_name" placeholder="Last Name" required>
-  <input class="form-control mb-2" name="phone" placeholder="Phone" required>
-  <input class="form-control mb-2" name="email" placeholder="Email" required>
-  <input class="form-control mb-2" name="address" placeholder="Address" required>
-  <input class="form-control mb-2" name="linkedin" placeholder="LinkedIn URL">
-  <select class="form-select mb-3" name="category" required>
-    <option value="Family">Family</option>
-    <option value="Friends">Friends</option>
-    <option value="Favorite">Favorite</option>
-    <option value="Others">Others</option>
-  </select>
-  <button class="btn btn-success">Add</button>
-</form>
+<div class="card p-4 mx-auto mt-4" style="max-width:500px">
+  <h5 class="text-center mb-3">Add New Contact</h5>
+  <form method="POST" class="row g-2">
+    {% for name, type, ph in [
+      ("first_name", "text", "First Name"),
+      ("last_name", "text", "Last Name"),
+      ("phone", "text", "Phone"),
+      ("email", "email", "Email"),
+      ("address", "text", "Address"),
+      ("linkedin", "url", "LinkedIn URL (optional)")
+    ] %}
+    <div class="col-12">
+      <input name="{{name}}" type="{{type}}" class="form-control" placeholder="{{ph}}" {% if 'optional' not in ph %}required{% endif %}>
+    </div>
+    {% endfor %}
+    <div class="col-12">
+      <select name="category" class="form-select" required>
+        <option disabled selected>Choose Category</option>
+        {% for cat in ['Family', 'Friends', 'Favorite', 'Others'] %}
+        <option value="{{cat}}">{{cat}}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-12 d-grid">
+      <button class="btn btn-primary">Add</button>
+    </div>
+  </form>
+</div>
 {% endblock %}

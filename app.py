@@ -57,12 +57,17 @@ class User:
     def create_user_data(username):
         user_dir = os.path.join(USER_DATA_DIR, username)
         if not os.path.exists(user_dir):
-            copytree(DEFAULT_DATA_DIR, user_dir)
+            os.makedirs(user_dir)  # Ensure the user directory is created
+        user_file = os.path.join(user_dir, 'contacts.json')
+        if not os.path.exists(user_file):  # Only create the contacts file if it doesn't exist
+            with open(user_file, 'w') as f:
+                json.dump([], f)
 
 class Contact:
     def __init__(self, username):
         self.user_file = os.path.join(USER_DATA_DIR, username, 'contacts.json')
         if not os.path.exists(self.user_file):
+            # This shouldn't happen due to the previous fix, but we can add a safeguard just in case
             with open(self.user_file, 'w') as f:
                 json.dump([], f)
 
@@ -105,10 +110,7 @@ def home():
 
     contact_list = contacts.list()
     if q:
-        contact_list = [
-            c for c in contact_list
-            if c['first_name'].lower().startswith(q) or c['last_name'].lower().startswith(q)
-        ]
+        contact_list = [c for c in contact_list if q in c['first_name'].lower() or q in c['last_name'].lower()]
     
     # Sort alphabetically by first name, then last name
     cs = sorted(contact_list, key=lambda c: (c['first_name'].lower(), c['last_name'].lower()))

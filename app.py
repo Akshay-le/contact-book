@@ -1,139 +1,109 @@
 from flask import Flask, render_template, request, redirect, url_for, session
-import os
-import json
-from werkzeug.security import generate_password_hash, check_password_hash
-from shutil import copytree
+import json, os
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
 
-# File paths
-USERS_FILE = 'users.json'
-USER_DATA_DIR = 'user_data'
-DEFAULT_DATA_DIR = 'default_user_data'
+USERS_FILE, CONTACTS_FILE = 'users.json', 'contacts.json'
 
-# Ensure users.json exists
-if not os.path.exists(USERS_FILE):
-    with open(USERS_FILE, 'w') as f:
-        json.dump({}, f)
-
-# Ensure default directory exists
-if not os.path.exists(DEFAULT_DATA_DIR):
-    os.makedirs(DEFAULT_DATA_DIR)
-    with open(os.path.join(DEFAULT_DATA_DIR, 'contacts.json'), 'w') as f:
-        json.dump([], f)
-
-# ---------- CLASSES ----------
-
-class User:
-    @staticmethod
-    def register(username, password):
-        users = User.load_users()
-        if username in users:
-            return False
-        users[username] = generate_password_hash(password)
-        User.save_users(users)
-        User.create_user_data(username)
-        return True
-
-    @staticmethod
-    def login(username, password):
-        users = User.load_users()
-        if username in users and check_password_hash(users[username], password):
-            return True
-        return False
-
-    @staticmethod
-    def load_users():
-        with open(USERS_FILE, 'r') as f:
-            return json.load(f)
-
-    @staticmethod
-    def save_users(users):
-        with open(USERS_FILE, 'w') as f:
-            json.dump(users, f)
-
-    @staticmethod
-    def create_user_data(username):
-        user_dir = os.path.join(USER_DATA_DIR, username)
-        if not os.path.exists(user_dir):
-            copytree(DEFAULT_DATA_DIR, user_dir)
-
-class Contact:
-    def __init__(self, username):
-        self.user_file = os.path.join(USER_DATA_DIR, username, 'contacts.json')
-        if not os.path.exists(self.user_file):
-            with open(self.user_file, 'w') as f:
-                json.dump([], f)
+class Storage:
+    def __init__(self, path):
+        self.path = path
 
     def load(self):
-        with open(self.user_file, 'r') as f:
-            return json.load(f)
+        if not os.path.exists(self.path):
+            return {}
+        try:
+            return json.load(open(self.path))
+        except:
+            return {}
 
-    def save(self, contacts):
-        with open(self.user_file, 'w') as f:
-            json.dump(contacts, f)
+    def save(self, data):
+        json.dump(data, open(self.path, 'w'), indent=4)
 
-    def list(self):
-        return self.load()
+class UserManager:
+    def __init__(self, storage):
+        self.store = storage
+        self.users = self.load()
 
-    def add(self, contact):
-        contacts = self.load()
-        contacts.append(contact)
-        self.save(contacts)
+    def load(self):
+        users = self.store.load()
+        return {u: {'password': p} if isinstance(p, str) else p for u, p in users.items()}
 
-    def update(self, index, contact):
-        contacts = self.load()
-        contacts[index] = contact
-        self.save(contacts)
+    def save(self):
+        self.store.save(self.users)
 
-    def delete(self, index):
-        contacts = self.load()
-        if 0 <= index < len(contacts):
-            contacts.pop(index)
-            self.save(contacts)
+    def register(self, u, p):
+        if u in self.users:
+            return False
+        self.users[u] = {'password': p}
+        self.save()
+        return True
 
-# ---------- ROUTES ----------
+    def auth(self, u, p):
+        return u in self.users and self.users[u]['password'] == p
+
+class ContactManager:
+    def __init__(self, storage):
+        self.store = storage
+        self.data = self.store.load()
+
+    def save(self):
+        self.store.save(self.data)
+
+    def list(self, user):
+        return self.data.get(user, [])
+
+    def add(self, user, c):
+        self.data.setdefault(user, []).append(c)
+        self.save()
+
+    def update(self, user, i, c):
+        self.data[user][i] = c
+        self.save()
+
+    def delete(self, user, i):
+        del self.data[user][i]
+        self.save()
+
+users = UserManager(Storage(USERS_FILE))
+contacts = ContactManager(Storage(CONTACTS_FILE))
 
 @app.route('/')
 def home():
     if 'username' not in session:
         return redirect(url_for('login'))
     u = session['username']
-    contacts = Contact(u)
     q = request.args.get('q', '').lower()
-
-    contact_list = contacts.list()
+    cs = contacts.list(u)
     if q:
-        contact_list = [c for c in contact_list if q in c['first_name'].lower() or q in c['last_name'].lower()]
-    
-    # Sort alphabetically by first name, then last name
-    cs = sorted(contact_list, key=lambda c: (c['first_name'].lower(), c['last_name'].lower()))
-    return render_template('home.html', contacts=cs, username=u)
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        u = request.form['username']
-        p = request.form['password']
-        if User.login(u, p):
-            session['username'] = u
-            return redirect(url_for('home'))
-        else:
-            return render_template('login.html', error='Invalid credentials')
-    return render_template('login.html')
+        cs = [c for c in cs if q in c['first_name'].lower() or q in c['last_name'].lower()]
+    # Sort alphabetically by first name
+    cs.sort(key=lambda c: c['first_name'].lower())
+    return render_template('home.html', username=u, contacts=cs, query=q)
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
         u = request.form['username']
         p = request.form['password']
-        if User.register(u, p):
+        if not users.register(u, p):
+            return 'Username exists!'
+        contacts.data[u] = []
+        contacts.save()
+        return redirect(url_for('login'))
+    return render_template('register.html')
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        u = request.form['username']
+        p = request.form['password']
+        if users.auth(u, p):
             session['username'] = u
             return redirect(url_for('home'))
-        else:
-            return render_template('register.html', error='Username already exists')
-    return render_template('register.html')
+        return 'Invalid credentials!'
+    return render_template('login.html')
 
 @app.route('/logout')
 def logout():
@@ -141,56 +111,35 @@ def logout():
     return redirect(url_for('login'))
 
 @app.route('/add', methods=['GET', 'POST'])
-def add():
+def add_contact():
     if 'username' not in session:
         return redirect(url_for('login'))
-    u = session['username']
-    contacts = Contact(u)
     if request.method == 'POST':
-        contact = {
-            'first_name': request.form['first_name'],
-            'last_name': request.form['last_name'],
-            'phone': request.form['phone'],
-            'email': request.form['email'],
-            'address': request.form['address'],
-            'linkedin': request.form['linkedin'],
-            'category': request.form['category']
-        }
-        contacts.add(contact)
+        c = {k: request.form[k] for k in ['first_name', 'last_name', 'phone', 'email', 'address', 'linkedin', 'category']}
+        contacts.add(session['username'], c)
         return redirect(url_for('home'))
-    return render_template('add.html')
+    return render_template('add_contact.html')
 
 @app.route('/edit/<int:index>', methods=['GET', 'POST'])
-def edit(index):
+def edit_contact(index):
     if 'username' not in session:
         return redirect(url_for('login'))
     u = session['username']
-    contacts = Contact(u)
-    contact_list = contacts.list()
+    cs = contacts.list(u)
+    if index >= len(cs):
+        return 'Invalid contact index'
     if request.method == 'POST':
-        updated = {
-            'first_name': request.form['first_name'],
-            'last_name': request.form['last_name'],
-            'phone': request.form['phone'],
-            'email': request.form['email'],
-            'address': request.form['address'],
-            'linkedin': request.form['linkedin'],
-            'category': request.form['category']
-        }
-        contacts.update(index, updated)
+        c = {k: request.form[k] for k in ['first_name', 'last_name', 'phone', 'email', 'address', 'linkedin', 'category']}
+        contacts.update(u, index, c)
         return redirect(url_for('home'))
-    return render_template('edit.html', contact=contact_list[index], index=index)
+    return render_template('edit_contact.html', contact=cs[index])
 
 @app.route('/delete/<int:index>')
-def delete(index):
+def delete_contact(index):
     if 'username' not in session:
         return redirect(url_for('login'))
-    u = session['username']
-    contacts = Contact(u)
-    contacts.delete(index)
+    contacts.delete(session['username'], index)
     return redirect(url_for('home'))
 
-# ---------- MAIN ----------
-
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=False)
